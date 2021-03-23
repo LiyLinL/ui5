@@ -1,0 +1,27 @@
+{
+	"fw.Scheduler": {
+		"icon": "sap-icon://chart",
+		"name": "Scheduler for UI5",
+		"description": "Examples of Scheduler",
+		"source": "https://github.com/uia4w/ui5-fishbone",
+		"documentation": "https://github.com/uia4w/ui5-fishbone",
+		"demo": "https://github.com/uia4w/ui5-fishbone",
+		"license": "Apache 2.0",
+		"version": "1.0.0",
+		"content": {
+			"Scheduler": {
+				"id": "Scheduler",
+				"name": "Scheduler",
+				"type": "control",
+				"description": "AAAA",
+				"samples": [
+					{
+						"id": "schedulerTest",
+						"name": "schedulerTest",
+						"description": ""
+					}
+				]
+			}
+		}
+	}
+}

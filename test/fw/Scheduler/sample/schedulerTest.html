@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Test Page - Fishbone</title>
+		<base href="../../../../" />
+
+		<script
+			id="sap-ui-bootstrap"
+			src="resources/sap-ui-core.js"
+			data-sap-ui-async="true"
+			data-sap-ui-libs="sap.m, fw.Scheduler"
+			data-sap-ui-xx-bindingSyntax="complex"
+			data-sap-ui-theme="sap_belize"
+			sap-ui-debug="true"
+		></script>
+
+		<script>
+			sap.ui.getCore().attachInit(function () {
+				var sch = new fw.Scheduler.Scheduler({
+					id: "sched",
+					yUnit: [
+						{ key: 1, label: "James Smith" },
+						{ key: 2, label: "John Williams" },
+						{ key: 3, label: "David Miller" },
+						{ key: 4, label: "Linda Brown" },
+					],
+					detail: [
+						{
+							start_date: "2021-03-19 09:00:00",
+							end_date: "2021-03-19 12:00:00",
+							text: "Task A-12458",
+							headKey: 1,
+						},
+					],
+					eventOnDblclick: true,
+				});
+
+				sch.attachDblClick(function (e) {
+					e.getParameter("id");
+				});
+				sch.placeAt("content");
+			});
+		</script>
+	</head>
+	<body
+		id="content"
+		class="sapUiBody"
+		style="height: 100vh; width: 100vw"
+	></body>
+</html>

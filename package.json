@@ -1,0 +1,36 @@
+{
+  "name": "ui5lab-library-simple",
+  "version": "1.0.0",
+  "description": "Example UI5Lab library containing geometrical controls",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/UI5Lab/UI5Lab-library-simple.git"
+  },
+  "homepage": "https://ui5lab.github.io/UI5Lab-app-simple/index.html",
+  "ui5lab": {
+    "namespace": "ui5lab.geometry",
+    "icon": "database",
+    "displayName": "Geometry"
+  },
+  "license": "Apache-2.0",
+  "private": false,
+  "scripts": {
+    "test": "echo \"Error: no test specified. Please add some.\" && exit 1",
+    "prepare": "node prepare.js",
+    "start": "ui5 serve --open ./test-resources/ui5lab/browser/index.html",
+    "build": "ui5 build"
+  },
+  "dependencies": {
+    "@openui5/sap.f": "^1.58.4",
+    "@openui5/sap.m": "^1.58.4",
+    "@openui5/sap.ui.core": "^1.58.4",
+    "@openui5/sap.ui.layout": "^1.58.4",
+    "@openui5/themelib_sap_belize": "^1.58.4"
+  },
+  "devDependencies": {
+    "eslint": "^5.2.0",
+    "fs-extra": "^3.0.0",
+    "@ui5/cli": "^1.14.0",
+    "ui5lab-browser": "^1.0.0"
+  }
+}
