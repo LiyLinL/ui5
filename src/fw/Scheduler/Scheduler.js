@@ -1,23 +1,14 @@
 /* eslint-disable camelcase */
 /* eslint-disable no-unused-vars */
 sap.ui.define(
-	[
-		"sap/ui/core/Control",
-		"sap/ui/core/Element",
-		"./libs/dhtmlxscheduler",
-		"./libs/ext/dhtmlxscheduler_limit",
-		"./libs/ext/dhtmlxscheduler_timeline",
-		"./libs/ext/dhtmlxscheduler_treetimeline",
-		"./libs/ext/dhtmlxscheduler_tooltip",
-		"./libs/ext/dhtmlxscheduler_minical",
-		"./libs/ext/dhtmlxscheduler_collision",
-	],
+	["sap/ui/core/Control", "sap/ui/core/Element", "./library"],
 	function (Control, Element, library) {
 		"use strict";
 
 		var oSched = Control.extend("fw.Scheduler.Scheduler", {
 			metadata: {
 				library: "fw.Scheduler",
+				__Instance: undefined,
 				properties: {
 					width: { type: "string", group: "appearance", defaultValue: "100%" },
 
@@ -67,6 +58,18 @@ sap.ui.define(
 						defaultValue: false,
 					},
 
+					beforeLightbox: {
+						type: "boolean",
+						group: "config",
+						defaultValue: false,
+					},
+
+					beforeTodayDisplayed: {
+						type: "boolean",
+						group: "config",
+						defaultValue: true,
+					},
+
 					name: { type: "string", defaultValue: "timeline" },
 
 					xUnit: { type: "string", defaultValue: "minute" },
@@ -93,33 +96,89 @@ sap.ui.define(
 					},
 
 					detail: { type: "object", defaultValue: undefined },
+
+					lightBoxSections: { type: "object", defaultValue: [] },
 				},
 				events: {
-					dblClick: {
+					onDblClick: {
 						parameters: {
 							id: { type: "string" },
 							e: { type: "object" },
 						},
 					},
+					onViewChange: {
+						parameters: {
+							new_mode: { type: "string" },
+							new_date: { type: "object" },
+						},
+					},
+					onDataRender: { parameters: {} },
+					onBeforeLightbox: {
+						parameters: {
+							id: { type: "string" },
+						},
+					},
+					onBeforeDrag: {
+						parameters: {
+							id: { type: "string" },
+							mode: { type: "string" },
+							e: { type: "Event" },
+						},
+					},
+					onBeforeEventChanged: {
+						parameters: {
+							ev: { type: "object" },
+							e: { type: "Event" },
+							is_new: { type: "boolean" },
+							original: { type: "object" },
+						},
+					},
+					onBeforeTodayDisplayed: { parameters: {} },
+					showLightbox: {
+						parameters: { id: { type: "string" } },
+					},
+					onPickCalDate: {
+						parameters: {
+							date: { type: "date" },
+						},
+					},
 				},
 			},
-			onAfterRendering: function () {
+			init: function () {
+				var windowHeight = window.innerHeight - 100;
+				this.setProperty("height", windowHeight + "px");
+			},
+			onAfterRendering: function (e) {
 				scheduler.locale.labels.section_custom = "Section";
+
 				// config
 				this.setConfig();
+
 				// create
-				this.createTimeLine();
-				// event
-				this.onDataRender(); // 資料渲染
+				if (scheduler.getView(this.getName()) == null) {
+					this.createTimeLine();
+
+					// event
+					this.onDblClick(); // 雙擊
+					this.onViewChange();
+					this.onDataRender(); // 資料渲染
+					this.onBeforeLightbox();
+					this.onBeforeDrag(); // 拖拉(伸縮)
+					this.onBeforeEventChanged(); // 事件發生前
+					this.onBeforeTodayDisplayed();
+					this.showLightbox();
+				}
+
 				this.miniCalCreate(); // 迷你日曆
-				this.onDblClick(); // 雙擊
-				this.onBeforeDrag(); // 拖拉(伸縮)
-				this.onBeforeEventChanged(); // 事件發生前
-				this.showLightbox();
+
+				var id = this.getId();
+				var name = this.getName();
 				// init
 				scheduler.init(this.getId(), new Date(), this.getName());
+				// 清除原有資料
+				scheduler.clearAll();
 				// 更新Head
-				this.updateCollection([{ key: 1, label: "James Smith" }]);
+				this.updateCollection(this.getYUnit());
 				// data render
 				this.parse(this.getDetail());
 			},
@@ -129,7 +188,7 @@ sap.ui.define(
 				scheduler.config.dblclick_create = this.getDblclickCreate();
 				scheduler.config.drag_create = this.getDragCreate();
 				scheduler.config.details_on_dblclick = this.getDetailsOnDblclick();
-				scheduler.config.lightbox.sections = [];
+				scheduler.config.lightbox.sections = this.getLightBoxSections();
 			},
 			createTimeLine: function () {
 				var scale = this.getSecondScale();
@@ -158,6 +217,8 @@ sap.ui.define(
 				});
 			},
 			miniCalCreate: function () {
+				var that = this;
+
 				$("#dhx_minical_icon").click(function () {
 					if (scheduler.isCalendarVisible()) {
 						scheduler.destroyCalendar();
@@ -167,6 +228,7 @@ sap.ui.define(
 							date: scheduler.getState().date,
 							navigation: true,
 							handler: function (date, calendar) {
+								that.fireOnPickCalDate({ date: date });
 								scheduler.setCurrentView(date);
 								scheduler.destroyCalendar();
 							},
@@ -174,8 +236,18 @@ sap.ui.define(
 					}
 				});
 			},
+			// event
+			onViewChange: function () {
+				var that = this;
+
+				scheduler.attachEvent("onViewChange", function (new_mode, new_date) {
+					that.fireOnViewChange({ new_mode: new_mode, new_date: new_date });
+				});
+			},
 			onDataRender: function () {
-				var id = this.getId();
+				var that = this,
+					id = this.getId();
+
 				scheduler.attachEvent("onDataRender", function () {
 					var title = $("#" + id)
 						.children("div.dhx_cal_navline")
@@ -184,38 +256,63 @@ sap.ui.define(
 					if (showText.includes("–")) {
 						title.text(showText.split("–")[0].replace(/\s*/g, ""));
 					}
+
+					that.fireOnDataRender();
 				});
 			},
-			showLightbox: function () {
+			onBeforeLightbox: function () {
+				var that = this;
+
 				scheduler.attachEvent("onBeforeLightbox", function (id) {
-					//any custom logic here
-					return false;
+					that.fireOnBeforeLightbox({ id: id });
+					return that.getBeforeLightbox();
 				});
-				// scheduler.showLightbox = function (id) {};
 			},
 			onDblClick: function () {
 				var that = this;
+
 				scheduler.attachEvent("onDblClick", function (id, e) {
-					that.fireDblClick({ id: id, e: e });
+					that.fireOnDblClick({ id: id, e: e });
 					return that.getEventOnDblclick();
 				});
 			},
 			onBeforeDrag: function () {
 				var that = this;
+
 				scheduler.attachEvent("onBeforeDrag", function (id, mode, e) {
+					that.fireOnBeforeDrag({
+						id: id,
+						mode: mode,
+						e: e,
+					});
 					return that.getEventDrag();
 				});
 			},
 			onBeforeEventChanged: function () {
 				var that = this;
+
 				scheduler.attachEvent(
 					"onBeforeEventChanged",
 					function (ev, e, is_new, original) {
-						//any custom logic here
+						that.fireOnBeforeEventChanged({
+							ev: ev,
+							e: e,
+							is_new: is_new,
+							original: original,
+						});
 						return that.getBeforeEventChanged();
 					}
 				);
 			},
+			onBeforeTodayDisplayed: function () {
+				var that = this;
+
+				scheduler.attachEvent("onBeforeTodayDisplayed", function () {
+					that.fireOnBeforeTodayDisplayed();
+					return that.getBeforeTodayDisplayed();
+				});
+			},
+			// method
 			updateCollection: function (data) {
 				scheduler.updateCollection("section", data);
 				return this;
@@ -230,6 +327,20 @@ sap.ui.define(
 				} else {
 					scheduler.setCurrentView();
 				}
+			},
+			deleteMarkedTimespan: function (date) {
+				if (date) {
+					scheduler.deleteMarkedTimespan(date);
+				} else {
+					scheduler.deleteMarkedTimespan();
+				}
+			},
+			addMarkedTimespan: function (obj) {
+				scheduler.addMarkedTimespan(obj);
+				return this;
+			},
+			showLightbox: function () {
+				scheduler.showLightbox = function (id) {};
 			},
 		});
 

@@ -1,5 +1,15 @@
 sap.ui.define(
-	["sap/ui/core/Core", "sap/ui/core/library"],
+	[
+		"sap/ui/core/Core",
+		"sap/ui/core/library",
+		"./libs/dhtmlxscheduler",
+		"./libs/ext/dhtmlxscheduler_limit",
+		"./libs/ext/dhtmlxscheduler_timeline",
+		"./libs/ext/dhtmlxscheduler_treetimeline",
+		"./libs/ext/dhtmlxscheduler_tooltip",
+		"./libs/ext/dhtmlxscheduler_minical",
+		"./libs/ext/dhtmlxscheduler_collision",
+	],
 	function (Cores, library) {
 		"use strict";
 
