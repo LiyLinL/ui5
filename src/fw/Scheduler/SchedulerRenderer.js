@@ -39,6 +39,8 @@ sap.ui.define(
 			oRm.write("<div");
 			oRm.addClass("dhx_cal_date");
 			oRm.writeClasses();
+			oRm.addStyle("color", "#CCE7F6");
+			oRm.writeStyles();
 			oRm.write("></div>");
 
 			oRm.write('<div id="dhx_minical_icon"');
